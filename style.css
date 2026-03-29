@@ -188,12 +188,12 @@ ul li {
     flex-direction: column;
     align-items: center;
   }
+}
 
 /* Correction taille roi noir */
 .piece-img[src*="roi_noir"] {
   width: 120%;
   height: 120%;
-}
 }
 
 
