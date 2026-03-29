@@ -192,8 +192,8 @@ ul li {
 
 /* Correction taille roi noir */
 .piece-img[src*="roi_noir"] {
-  width: 120%;
-  height: 120%;
+  width: 135%;
+  height: 135%;
 }
 
 
