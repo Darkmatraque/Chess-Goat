@@ -5,10 +5,14 @@
   <title>Chess Poop & Goat</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div id="app">
+
+    <!-- PANEL GAUCHE : Jeu -->
     <div id="left-panel">
       <h1>Chess Poop & Goat</h1>
+
       <div id="controls">
         <label for="ai-level">Niveau IA :</label>
         <select id="ai-level">
@@ -16,18 +20,23 @@
           <option value="3">Intermédiaire</option>
           <option value="5">Difficile</option>
         </select>
+
         <button id="new-game">Nouvelle partie</button>
       </div>
 
+      <!-- ÉCHIQUIER -->
       <div id="board"></div>
     </div>
 
+    <!-- PANEL DROIT : Infos & Score -->
     <div id="right-panel">
       <h2>Score</h2>
+
       <div class="score-row">
         <span>Blancs</span>
         <span id="score-white">0</span>
       </div>
+
       <div class="score-row">
         <span>Noirs</span>
         <span id="score-black">0</span>
@@ -38,15 +47,16 @@
       <div id="turn-indicator"></div>
 
       <h3>Légende pièces</h3>
-      <ul>
+      <ul id="legend">
         <li>💩 = pion (blanc/noir)</li>
         <li>🐐 = roi (blanc/noir)</li>
-        <li>♕/♛ = dame</li>
-        <li>♖/♜ = tour</li>
-        <li>♗/♝ = fou</li>
-        <li>♘/♞ = cavalier</li>
+        <li>♕ / ♛ = dame</li>
+        <li>♖ / ♜ = tour</li>
+        <li>♗ / ♝ = fou</li>
+        <li>♘ / ♞ = cavalier (gauche/droite)</li>
       </ul>
     </div>
+
   </div>
 
   <script src="script.js"></script>
