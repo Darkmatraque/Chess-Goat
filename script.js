@@ -1,8 +1,8 @@
 // --- Représentation ---
 // Majuscules = Blancs, minuscules = Noirs
-// P/p = pion (affiché 💩)
-// K/k = roi (affiché 🐐)
-// Q/R/B/N = dame, tour, fou, cavalier
+// P/p = pion (affiché 💩 blanc/noir)
+// K/k = roi (affiché 🐐 blanc/noir)
+// Q/R/B/N = dame, tour, fou, cavalier (Unicode noir/blanc)
 
 let board = [];
 let selected = null;
@@ -10,7 +10,7 @@ let possibleMoves = [];
 let whiteToMove = true;
 let gameOver = false;
 
-// Roque : on garde l'info si roi/tours ont bougé
+// Roque : état
 let castlingRights = {
   whiteKingMoved: false,
   whiteRookA: false,
@@ -99,16 +99,24 @@ function renderBoard() {
   }
 }
 
+// Pièces “propres” noir/blanc
 function pieceToChar(p) {
   if (!p) return "";
   const isWhite = p === p.toUpperCase();
   const type = p.toUpperCase();
+
+  // Pions caca : même symbole, couleur via case
   if (type === "P") return "💩";
+
+  // Rois chèvres : même symbole, couleur via case
   if (type === "K") return "🐐";
+
+  // Autres pièces : version blanche/noire Unicode
   if (type === "Q") return isWhite ? "♕" : "♛";
   if (type === "R") return isWhite ? "♖" : "♜";
   if (type === "B") return isWhite ? "♗" : "♝";
   if (type === "N") return isWhite ? "♘" : "♞";
+
   return "?";
 }
 
@@ -271,7 +279,6 @@ function generatePseudoLegalMovesForSquare(row, col, color) {
         moves.push({ fromRow: row, fromCol: col, toRow: nr, toCol: nc });
       }
     }
-    // Roque
     addCastlingMoves(row, col, color, moves);
   }
 
@@ -300,7 +307,6 @@ function addCastlingMoves(row, col, color, moves) {
 
   if (row !== backRank || col !== 4) return;
 
-  // Petit roque (côté roi)
   const rookH = board[backRank][7];
   const rookHMoved = isWhite ? castlingRights.whiteRookH : castlingRights.blackRookH;
   if (rookH && rookH.toUpperCase() === "R" && !rookHMoved) {
@@ -319,7 +325,6 @@ function addCastlingMoves(row, col, color, moves) {
     }
   }
 
-  // Grand roque (côté dame)
   const rookA = board[backRank][0];
   const rookAMoved = isWhite ? castlingRights.whiteRookA : castlingRights.blackRookA;
   if (rookA && rookA.toUpperCase() === "R" && !rookAMoved) {
@@ -346,11 +351,9 @@ function applyMoveWithCastling(b, move) {
   const isWhite = piece === piece.toUpperCase();
   const color = isWhite ? "white" : "black";
 
-  // Roque
   if (move.castling === "king") {
     b[move.toRow][move.toCol] = piece;
     b[move.fromRow][move.fromCol] = "";
-    // Tour
     b[move.toRow][5] = b[move.toRow][7];
     b[move.toRow][7] = "";
   } else if (move.castling === "queen") {
@@ -367,7 +370,6 @@ function applyMoveWithCastling(b, move) {
     b[move.fromRow][move.fromCol] = "";
   }
 
-  // Mise à jour droits de roque
   if (piece.toUpperCase() === "K") {
     if (color === "white") castlingRights.whiteKingMoved = true;
     else castlingRights.blackKingMoved = true;
@@ -379,18 +381,6 @@ function applyMoveWithCastling(b, move) {
     } else {
       if (move.fromRow === 0 && move.fromCol === 0) castlingRights.blackRookA = true;
       if (move.fromRow === 0 && move.fromCol === 7) castlingRights.blackRookH = true;
-    }
-  }
-  // Si une tour est capturée, on peut aussi bloquer le roque correspondant
-  const captured = board[move.toRow][move.toCol];
-  if (captured && captured.toUpperCase() === "R") {
-    if (color === "white") {
-      // Blanc vient de jouer, donc capture une tour noire
-      if (move.toRow === 0 && move.toCol === 0) castlingRights.blackRookA = true;
-      if (move.toRow === 0 && move.toCol === 7) castlingRights.blackRookH = true;
-    } else {
-      if (move.toRow === 7 && move.toCol === 0) castlingRights.whiteRookA = true;
-      if (move.toRow === 7 && move.toCol === 7) castlingRights.whiteRookH = true;
     }
   }
 }
