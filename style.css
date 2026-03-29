@@ -190,3 +190,9 @@ ul li {
   }
 }
 
+/* Correction taille roi noir */
+.piece-img[src*="roi_noir"] {
+  width: 95%;
+  height: 95%;
+}
+
