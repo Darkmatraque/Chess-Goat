@@ -1,8 +1,7 @@
-// --- Représentation du plateau ---
-// Codes :
-// majuscules = blancs, minuscules = noirs
+// --- Représentation ---
+// Majuscules = Blancs, minuscules = Noirs
 // P/p = pion (affiché 💩)
-// K/k = roi (affiché 🐐👑)
+// K/k = roi (affiché 🐐)
 // Q/R/B/N = dame, tour, fou, cavalier
 
 let board = [];
@@ -10,6 +9,16 @@ let selected = null;
 let possibleMoves = [];
 let whiteToMove = true;
 let gameOver = false;
+
+// Roque : on garde l'info si roi/tours ont bougé
+let castlingRights = {
+  whiteKingMoved: false,
+  whiteRookA: false,
+  whiteRookH: false,
+  blackKingMoved: false,
+  blackRookA: false,
+  blackRookH: false
+};
 
 let scoreWhite = 0;
 let scoreBlack = 0;
@@ -25,7 +34,6 @@ const newGameBtn = document.getElementById("new-game");
 // --- Initialisation ---
 
 function initBoard() {
-  // Position de départ classique
   board = [
     ["r", "n", "b", "q", "k", "b", "n", "r"],
     ["p", "p", "p", "p", "p", "p", "p", "p"],
@@ -40,6 +48,14 @@ function initBoard() {
   selected = null;
   possibleMoves = [];
   gameOver = false;
+  castlingRights = {
+    whiteKingMoved: false,
+    whiteRookA: false,
+    whiteRookH: false,
+    blackKingMoved: false,
+    blackRookA: false,
+    blackRookH: false
+  };
   renderBoard();
   updateStatus("À toi de jouer (Blancs).");
   updateTurnIndicator();
@@ -71,13 +87,11 @@ function renderBoard() {
     sq.classList.remove("selected", "move-target", "check");
   });
 
-  // surligner les cases possibles
   possibleMoves.forEach((m) => {
     const idx = m.toRow * 8 + m.toCol;
     squares[idx].classList.add("move-target");
   });
 
-  // surligner le roi en échec
   const kingPos = findKing(whiteToMove ? "white" : "black");
   if (kingPos && isSquareAttacked(kingPos.row, kingPos.col, whiteToMove ? "black" : "white")) {
     const idx = kingPos.row * 8 + kingPos.col;
@@ -90,7 +104,7 @@ function pieceToChar(p) {
   const isWhite = p === p.toUpperCase();
   const type = p.toUpperCase();
   if (type === "P") return "💩";
-  if (type === "K") return "🐐👑";
+  if (type === "K") return "🐐";
   if (type === "Q") return isWhite ? "♕" : "♛";
   if (type === "R") return isWhite ? "♖" : "♜";
   if (type === "B") return isWhite ? "♗" : "♝";
@@ -98,7 +112,7 @@ function pieceToChar(p) {
   return "?";
 }
 
-// --- Gestion des clics ---
+// --- Clics ---
 
 function onSquareClick(e) {
   if (gameOver) return;
@@ -106,10 +120,8 @@ function onSquareClick(e) {
   const col = parseInt(e.currentTarget.dataset.col, 10);
   const piece = board[row][col];
 
-  // Si c'est au tour des blancs, l'IA joue les noirs, et inversement
   const playerColor = whiteToMove ? "white" : "black";
 
-  // Si on clique sur une case de destination possible
   const move = possibleMoves.find(
     (m) => m.toRow === row && m.toCol === col
   );
@@ -118,13 +130,11 @@ function onSquareClick(e) {
     renderBoard();
     checkGameState();
     if (!gameOver) {
-      // Tour de l'IA
       setTimeout(aiMove, 200);
     }
     return;
   }
 
-  // Sinon, sélection d'une pièce du joueur humain
   if (!pieceBelongsToColor(piece, playerColor)) {
     selected = null;
     possibleMoves = [];
@@ -144,7 +154,7 @@ function highlightSelected(row, col) {
   squares[idx].classList.add("selected");
 }
 
-// --- Utilitaires couleur/pièces ---
+// --- Couleurs / utilitaires ---
 
 function pieceBelongsToColor(piece, color) {
   if (!piece) return false;
@@ -156,20 +166,27 @@ function oppositeColor(color) {
   return color === "white" ? "black" : "white";
 }
 
+function inBounds(r, c) {
+  return r >= 0 && r < 8 && c >= 0 && c < 8;
+}
+
 // --- Génération de coups ---
 
 function generateLegalMovesForSquare(row, col, color) {
   const piece = board[row][col];
   if (!piece || !pieceBelongsToColor(piece, color)) return [];
   const pseudo = generatePseudoLegalMovesForSquare(row, col, color);
-  // Filtrer les coups qui laissent le roi en échec
   const legal = [];
   for (const m of pseudo) {
-    const backup = cloneBoard(board);
-    applyMove(board, m);
+    const backup = {
+      board: cloneBoard(board),
+      castling: { ...castlingRights },
+      whiteToMove
+    };
+    applyMoveWithCastling(board, m);
     const kingPos = findKing(color);
     const inCheck = kingPos && isSquareAttacked(kingPos.row, kingPos.col, oppositeColor(color));
-    board = backup;
+    restoreState(backup);
     if (!inCheck) legal.push(m);
   }
   return legal;
@@ -186,17 +203,14 @@ function generatePseudoLegalMovesForSquare(row, col, color) {
   const startRow = isWhite ? 6 : 1;
 
   if (type === "P") {
-    // avance simple
     const nr = row + dirPawn;
     if (inBounds(nr, col) && board[nr][col] === "") {
       addPawnMove(row, col, nr, col, color, moves);
-      // double pas
       const nr2 = row + 2 * dirPawn;
       if (row === startRow && board[nr2][col] === "") {
         moves.push({ fromRow: row, fromCol: col, toRow: nr2, toCol: col });
       }
     }
-    // captures
     for (const dc of [-1, 1]) {
       const cr = row + dirPawn;
       const cc = col + dc;
@@ -257,16 +271,15 @@ function generatePseudoLegalMovesForSquare(row, col, color) {
         moves.push({ fromRow: row, fromCol: col, toRow: nr, toCol: nc });
       }
     }
-    // (pas de roque pour simplifier)
+    // Roque
+    addCastlingMoves(row, col, color, moves);
   }
 
   return moves;
 }
 
 function addPawnMove(fr, fc, tr, tc, color, moves) {
-  // promotion si on atteint la dernière rangée
   if ((color === "white" && tr === 0) || (color === "black" && tr === 7)) {
-    // on promeut en dame
     moves.push({
       fromRow: fr,
       fromCol: fc,
@@ -279,30 +292,115 @@ function addPawnMove(fr, fc, tr, tc, color, moves) {
   }
 }
 
-function inBounds(r, c) {
-  return r >= 0 && r < 8 && c >= 0 && c < 8;
+function addCastlingMoves(row, col, color, moves) {
+  const isWhite = color === "white";
+  const kingMoved = isWhite ? castlingRights.whiteKingMoved : castlingRights.blackKingMoved;
+  if (kingMoved) return;
+  const backRank = isWhite ? 7 : 0;
+
+  if (row !== backRank || col !== 4) return;
+
+  // Petit roque (côté roi)
+  const rookH = board[backRank][7];
+  const rookHMoved = isWhite ? castlingRights.whiteRookH : castlingRights.blackRookH;
+  if (rookH && rookH.toUpperCase() === "R" && !rookHMoved) {
+    if (board[backRank][5] === "" && board[backRank][6] === "") {
+      if (!isSquareAttacked(backRank, 4, oppositeColor(color)) &&
+          !isSquareAttacked(backRank, 5, oppositeColor(color)) &&
+          !isSquareAttacked(backRank, 6, oppositeColor(color))) {
+        moves.push({
+          fromRow: backRank,
+          fromCol: 4,
+          toRow: backRank,
+          toCol: 6,
+          castling: "king"
+        });
+      }
+    }
+  }
+
+  // Grand roque (côté dame)
+  const rookA = board[backRank][0];
+  const rookAMoved = isWhite ? castlingRights.whiteRookA : castlingRights.blackRookA;
+  if (rookA && rookA.toUpperCase() === "R" && !rookAMoved) {
+    if (board[backRank][1] === "" && board[backRank][2] === "" && board[backRank][3] === "") {
+      if (!isSquareAttacked(backRank, 4, oppositeColor(color)) &&
+          !isSquareAttacked(backRank, 3, oppositeColor(color)) &&
+          !isSquareAttacked(backRank, 2, oppositeColor(color))) {
+        moves.push({
+          fromRow: backRank,
+          fromCol: 4,
+          toRow: backRank,
+          toCol: 2,
+          castling: "queen"
+        });
+      }
+    }
+  }
 }
 
-// --- Application de coup ---
+// --- Application de coup + roque ---
 
-function applyMove(b, move) {
+function applyMoveWithCastling(b, move) {
   const piece = b[move.fromRow][move.fromCol];
-  let movedPiece = piece;
-  if (move.promotion) {
-    // promotion en dame
-    movedPiece = piece === piece.toUpperCase() ? "Q" : "q";
+  const isWhite = piece === piece.toUpperCase();
+  const color = isWhite ? "white" : "black";
+
+  // Roque
+  if (move.castling === "king") {
+    b[move.toRow][move.toCol] = piece;
+    b[move.fromRow][move.fromCol] = "";
+    // Tour
+    b[move.toRow][5] = b[move.toRow][7];
+    b[move.toRow][7] = "";
+  } else if (move.castling === "queen") {
+    b[move.toRow][move.toCol] = piece;
+    b[move.fromRow][move.fromCol] = "";
+    b[move.toRow][3] = b[move.toRow][0];
+    b[move.toRow][0] = "";
+  } else {
+    let movedPiece = piece;
+    if (move.promotion) {
+      movedPiece = isWhite ? "Q" : "q";
+    }
+    b[move.toRow][move.toCol] = movedPiece;
+    b[move.fromRow][move.fromCol] = "";
   }
-  b[move.toRow][move.toCol] = movedPiece;
-  b[move.fromRow][move.fromCol] = "";
+
+  // Mise à jour droits de roque
+  if (piece.toUpperCase() === "K") {
+    if (color === "white") castlingRights.whiteKingMoved = true;
+    else castlingRights.blackKingMoved = true;
+  }
+  if (piece.toUpperCase() === "R") {
+    if (color === "white") {
+      if (move.fromRow === 7 && move.fromCol === 0) castlingRights.whiteRookA = true;
+      if (move.fromRow === 7 && move.fromCol === 7) castlingRights.whiteRookH = true;
+    } else {
+      if (move.fromRow === 0 && move.fromCol === 0) castlingRights.blackRookA = true;
+      if (move.fromRow === 0 && move.fromCol === 7) castlingRights.blackRookH = true;
+    }
+  }
+  // Si une tour est capturée, on peut aussi bloquer le roque correspondant
+  const captured = board[move.toRow][move.toCol];
+  if (captured && captured.toUpperCase() === "R") {
+    if (color === "white") {
+      // Blanc vient de jouer, donc capture une tour noire
+      if (move.toRow === 0 && move.toCol === 0) castlingRights.blackRookA = true;
+      if (move.toRow === 0 && move.toCol === 7) castlingRights.blackRookH = true;
+    } else {
+      if (move.toRow === 7 && move.toCol === 0) castlingRights.whiteRookA = true;
+      if (move.toRow === 7 && move.toCol === 7) castlingRights.whiteRookH = true;
+    }
+  }
 }
 
 function makeMove(move) {
   const piece = board[move.fromRow][move.fromCol];
   const captured = board[move.toRow][move.toCol];
 
-  applyMove(board, move);
+  applyMoveWithCastling(board, move);
 
-  // mise à jour score si capture
   if (captured) {
     const val = pieceValue(captured);
     if (piece === piece.toUpperCase()) {
@@ -344,7 +442,7 @@ function updateTurnIndicator() {
   turnEl.textContent = whiteToMove ? "Tour : Blancs" : "Tour : Noirs (IA)";
 }
 
-// --- Détection du roi, échec, mat ---
+// --- Roi / échec / mat ---
 
 function findKing(color) {
   const isWhite = color === "white";
@@ -353,8 +451,7 @@ function findKing(color) {
       const p = board[r][c];
       if (!p) continue;
       if (p.toUpperCase() === "K") {
-        const belongs = pieceBelongsToColor(p, color);
-        if (belongs) return { row: r, col: c };
+        if (pieceBelongsToColor(p, color)) return { row: r, col: c };
       }
     }
   }
@@ -362,7 +459,6 @@ function findKing(color) {
 }
 
 function isSquareAttacked(row, col, byColor) {
-  // On parcourt toutes les pièces de byColor et on voit si elles peuvent aller sur (row,col)
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
       const p = board[r][c];
@@ -408,14 +504,14 @@ function checkGameState() {
   }
 }
 
-// --- IA (minimax simple) ---
+// --- IA (negamax + alpha-beta) ---
 
 function aiMove() {
   if (gameOver) return;
   const color = whiteToMove ? "white" : "black";
-  if (color === "white") return; // humain = blancs
+  if (color === "white") return;
 
-  const depth = parseInt(aiLevelSelect.value, 10); // 1,2,3
+  const depth = parseInt(aiLevelSelect.value, 10);
   const moves = allLegalMoves(color);
   if (moves.length === 0) {
     checkGameState();
@@ -426,10 +522,15 @@ function aiMove() {
   let bestMove = moves[0];
 
   for (const move of moves) {
-    const backup = cloneBoard(board);
-    applyMove(board, move);
+    const backup = {
+      board: cloneBoard(board),
+      castling: { ...castlingRights },
+      whiteToMove
+    };
+    applyMoveWithCastling(board, move);
+    whiteToMove = !whiteToMove;
     const score = -negamax(depth - 1, oppositeColor(color), -Infinity, Infinity);
-    board = backup;
+    restoreState(backup);
     if (score > bestScore) {
       bestScore = score;
       bestMove = move;
@@ -448,21 +549,23 @@ function negamax(depth, color, alpha, beta) {
 
   const moves = allLegalMoves(color);
   if (moves.length === 0) {
-    // mat ou pat
     const kingPos = findKing(color);
     const inCheck = kingPos && isSquareAttacked(kingPos.row, kingPos.col, oppositeColor(color));
-    if (inCheck) {
-      return -9999; // très mauvais
-    }
-    return 0; // pat
+    if (inCheck) return -9999;
+    return 0;
   }
 
   let best = -Infinity;
   for (const move of moves) {
-    const backup = cloneBoard(board);
-    applyMove(board, move);
+    const backup = {
+      board: cloneBoard(board),
+      castling: { ...castlingRights },
+      whiteToMove
+    };
+    applyMoveWithCastling(board, move);
+    whiteToMove = !whiteToMove;
     const score = -negamax(depth - 1, oppositeColor(color), -beta, -alpha);
-    board = backup;
+    restoreState(backup);
     if (score > best) best = score;
     if (best > alpha) alpha = best;
     if (alpha >= beta) break;
@@ -481,7 +584,6 @@ function evaluateBoard(perspectiveColor) {
       score += isWhite ? val : -val;
     }
   }
-  // si perspective = noirs, on inverse
   return perspectiveColor === "white" ? score : -score;
 }
 
@@ -491,9 +593,18 @@ function cloneBoard(b) {
   return b.map((row) => row.slice());
 }
 
+function restoreState(state) {
+  board = cloneBoard(state.board);
+  castlingRights = { ...state.castling };
+  whiteToMove = state.whiteToMove;
+}
+
 // --- Événements ---
 
 newGameBtn.addEventListener("click", () => {
+  scoreWhite = 0;
+  scoreBlack = 0;
+  updateScores();
   initBoard();
 });
 
