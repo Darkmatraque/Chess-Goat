@@ -104,10 +104,9 @@ h1 {
 /* PIECES ---------------------------------------------------------- */
 
 .piece-img {
-  width: 100%;
-  height: 100%;
+  width: 85%;
+  height: 85%;
   object-fit: contain;
-  padding: 8px; /* ← réduction de la taille des pièces */
   pointer-events: none;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
@@ -162,6 +161,8 @@ h2 {
   margin-top: 4px;
 }
 
+/* LEGEND ---------------------------------------------------------- */
+
 ul {
   list-style: none;
   font-size: 14px;
@@ -169,6 +170,15 @@ ul {
 
 ul li {
   margin-bottom: 4px;
+}
+
+.legend-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+  filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
 }
 
 /* RESPONSIVE ------------------------------------------------------ */
@@ -179,3 +189,4 @@ ul li {
     align-items: center;
   }
 }
+
