@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chess Poop & Goat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="left-panel">
+      <h1>Chess Poop & Goat</h1>
+      <div id="controls">
+        <label for="ai-level">Niveau IA :</label>
+        <select id="ai-level">
+          <option value="1">Débutant</option>
+          <option value="2">Intermédiaire</option>
+          <option value="3">Difficile</option>
+        </select>
+        <button id="new-game">Nouvelle partie</button>
+      </div>
+
+      <div id="board"></div>
+    </div>
+
+    <div id="right-panel">
+      <h2>Score</h2>
+      <div class="score-row">
+        <span>Blancs</span>
+        <span id="score-white">0</span>
+      </div>
+      <div class="score-row">
+        <span>Noirs</span>
+        <span id="score-black">0</span>
+      </div>
+
+      <h2>Infos</h2>
+      <div id="status"></div>
+      <div id="turn-indicator"></div>
+
+      <h3>Légende pièces</h3>
+      <ul>
+        <li>♜ ♞ ♝ ♛ = pièces classiques</li>
+        <li>💩 = pion</li>
+        <li>🐐👑 = roi</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
