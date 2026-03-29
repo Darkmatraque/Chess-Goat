@@ -106,9 +106,9 @@ h1 {
 .piece-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;       /* garde les proportions */
-  padding: 4px;              /* évite les débordements */
-  pointer-events: none;      /* clics passent à travers */
+  object-fit: contain;
+  padding: 8px; /* ← réduction de la taille des pièces */
+  pointer-events: none;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
 }
