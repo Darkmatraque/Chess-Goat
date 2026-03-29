@@ -83,10 +83,10 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 32px;
+  font-size: 34px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.05s;
 }
 
 .square.dark {
@@ -108,6 +108,10 @@ h1 {
 
 .square.check {
   box-shadow: inset 0 0 0 3px rgba(255, 60, 60, 0.9);
+}
+
+.square:active {
+  transform: scale(0.97);
 }
 
 #right-panel {
