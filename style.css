@@ -1,4 +1,4 @@
-/* RESET & BASE -------------------------------------------------- */
+/* RESET ---------------------------------------------------------- */
 
 * {
   box-sizing: border-box;
@@ -16,7 +16,7 @@ body {
   min-height: 100vh;
 }
 
-/* APP CONTAINER -------------------------------------------------- */
+/* APP ------------------------------------------------------------ */
 
 #app {
   display: flex;
@@ -51,10 +51,6 @@ h1 {
   margin-bottom: 16px;
 }
 
-#controls label {
-  font-size: 14px;
-}
-
 #controls select,
 #controls button {
   background: #2a0b4a;
@@ -67,11 +63,6 @@ h1 {
   transition: 0.15s;
 }
 
-#controls select:focus,
-#controls button:focus {
-  outline: 2px solid #c58bff;
-}
-
 #controls button:hover {
   background: #3a0f6a;
 }
@@ -82,6 +73,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(8, 64px);
   grid-template-rows: repeat(8, 64px);
+  width: 512px;
+  height: 512px;
   border: 3px solid #7b3cff;
   border-radius: 10px;
   overflow: hidden;
@@ -108,13 +101,15 @@ h1 {
   color: #1a0028;
 }
 
-/* PIECE IMAGES ---------------------------------------------------- */
+/* PIECES ---------------------------------------------------------- */
 
 .piece-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  pointer-events: none;
+  object-fit: contain;       /* garde les proportions */
+  padding: 4px;              /* évite les débordements */
+  pointer-events: none;      /* clics passent à travers */
+  image-rendering: crisp-edges;
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
 }
 
